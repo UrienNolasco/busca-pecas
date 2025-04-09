@@ -8,8 +8,16 @@ interface MaterialInfo {
   volume: number;
 }
 
+interface GoogleSearchItem {
+  title: string;
+  snippet: string;
+  link: string;
+}
+
 // Função para realizar a busca no Google
-async function googleSearch(query: string): Promise<any> {
+async function googleSearch(
+  query: string
+): Promise<{ items: GoogleSearchItem[] }> {
   const apiKey = process.env.GOOGLE_API_KEY;
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
   const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(
@@ -43,9 +51,11 @@ export async function POST(req: NextRequest) {
     const searchQuery = `Peça ${codigo} para modelo ${carro}`;
     const searchResults = await googleSearch(searchQuery);
 
+    const items: GoogleSearchItem[] = searchResults.items || [];
+
     // Extrai e formata os resultados desejados
-    const items = searchResults.items || [];
-    const resultadosFormatados = items.map((item: any) => ({
+
+    const resultadosFormatados = items.map((item) => ({
       title: item.title,
       snippet: item.snippet,
       link: item.link,
@@ -103,6 +113,7 @@ export async function POST(req: NextRequest) {
       const material: MaterialInfo = JSON.parse(responseText);
       return NextResponse.json(material);
     } catch (error) {
+      console.error("Erro ao processar JSON:", error);
       return NextResponse.json(
         { error: "Erro ao processar a resposta do Gemini" },
         { status: 500 }
